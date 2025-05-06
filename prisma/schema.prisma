@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id                      Int                       @id @default(autoincrement())
+  name                    String
+  password                String                    @default("Pass@123")
+  email                   String
+  phoneNumber             String
+  address                 String
+  city                    String                    @default("Pune")
+  status                  String                    @default("Active") //Active and Inactive
+  profileImage            String
+  roleId                  Int
+  branchId                Int
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @default(now())
+  isDeleted               Boolean                   @default(false)
+  role                    role?                     @relation(fields: [roleId], references: [id])
+  branch                  branch                    @relation(fields: [branchId], references: [id])
+  holiday                 holiday[]
+  reservations            reservations[]
+  crmEmail                crmEmail[]
+  vouchers                vouchers[]
+  deletedTables           table[]         @relation("DeletedByUser")
+  createdTables           table[]         @relation("CreatedByUser")
+  updatedTables           table[]         @relation("UpdatedByUser")
+  deletedTasteMenu        tasteMenu[]         @relation("DeletedByUser")
+  createdTasteMenu        tasteMenu[]         @relation("CreatedByUser")
+  updatedTasteMenu        tasteMenu[]         @relation("UpdatedByUser")
+  createdBranch         branch[]     @relation("CreatedByUser")
+  updatedBranch         branch[]     @relation("UpdatedByUser")
+  deletedBranch         branch[]     @relation("DeletedByUser")
+
+
+}
+model branch {
+  id                      Int           @id @default(autoincrement())
+  paymentGatewayID        String
+  cgstNumber              String
+  sgstNumber              String
+  weekDays                String          @default("Tuesday,Wednesday,Thursday,Friday")
+  weekendDays             String          @default("Saturday,Sunday")
+  weekOffDay              String          @default("Monday")
+  openingTime             String          @default("11:00 AM")
+  closingTime             String          @default("11:00 PM")
+  weekendOpeningTime      String          @default("11:00 AM")
+  weekendClosingTime      String          @default("11:00 PM")
+  maxGuestSize            Int
+  email                   String
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  deletedAt               DateTime? 
+  createdBy             Int?
+  updatedBy             Int?
+  deletedBy             Int?
+  deletedByUser           user?          @relation("DeletedByUser", fields: [deletedBy], references: [id])
+  createdByUser           user?          @relation("CreatedByUser", fields: [createdBy], references: [id])
+  updatedByUser           user?          @relation("UpdatedByUser", fields: [updatedBy], references: [id])       
+  user                    user[]
+  settings                settings[]  
+  menu                    menu[]
+  vouchers                vouchers[]
+  reservations            reservations[]
+  dailyMenu               dailyMenu[]
+  table                   table[]
+  holiday                 holiday[]
+  tasteMenu               tasteMenu[]
+  waitingList             waitingList[]
+}
+model settings {
+  id                      Int             @id @default(autoincrement())
+  settingkey              String
+  settingName             String
+  settingValue            String
+  status                  Boolean         @default(true)
+  branchId                Int
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  branch                  branch?         @relation(fields: [branchId], references: [id])
+}
+model menu {
+  id                      Int             @id @default(autoincrement())
+  name                    String
+  description             String
+  menuSliderHeader        String
+  menuImage               String
+  menuType                String          //Veg, Non-Veg, Vegan, Cold Drinks, Wine
+  branchId                Int
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  // deletedBy               Int?
+  // createdBy               Int?
+  // updatedBy               Int?
+  deletedAt               DateTime?
+  branch                  branch?         @relation(fields: [branchId], references: [id])
+  // user                    user?            @relation(fields: [deletedBy,createdBy,updatedBy], references: [id])
+  dailyMenuDetail         dailyMenuDetail[]
+}
+
+model table {
+  id                      Int             @id @default(autoincrement())
+  tableName               String
+  tableSize               Int
+  tableShape              String 
+  branchId                Int
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  deletedBy               Int?
+  deletedAt               DateTime?
+  createdBy               Int?
+  updatedBy               Int?
+  branch                  branch         @relation(fields: [branchId], references: [id])
+  deletedByUser           user?          @relation("DeletedByUser", fields: [deletedBy], references: [id])
+  createdByUser           user?          @relation("CreatedByUser", fields: [createdBy], references: [id])
+  updatedByUser           user?          @relation("UpdatedByUser", fields: [updatedBy], references: [id])
+  reservationsTableDetail reservationsTableDetail[]
+}
+model role {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  status         Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  // customer       customer[]
+  rolePermission rolePermission[]
+  user           user[]
+}
+model permission {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  rolePermission rolePermission[]
+}
+model rolePermission {
+  id            Int        @id @default(autoincrement())
+  role_id       Int
+  permission_id Int
+  status        Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now())
+  permission    permission @relation(fields: [permission_id], references: [id])
+  role          role       @relation(fields: [role_id], references: [id])
+
+  @@unique([role_id, permission_id])
+}
+model vouchers {
+  id                      Int             @id @default(autoincrement())
+  voucherCode             String
+  description             String          @default("")
+  amount                  Int
+  startDate               DateTime
+  endDate                 DateTime
+  availability            String          @default("Active")
+  branchId                Int
+  isGiftCard              Boolean         @default(false)
+  isGiftCardUsed          Boolean         @default(false)
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @default(now())
+  isDeleted               Boolean         @default(false)
+  deletedBy               Int?
+  createdBy               Int?
+  deletedAt               DateTime?      
+  branch                  branch          @relation(fields: [branchId], references: [id])
+  user                    user?            @relation(fields: [createdBy], references: [id])
+  reservations            reservations[]
+}
+model dailyMenu {
+  id                      Int             @id @default(autoincrement())
+  day                     String
+  lunch                   Boolean
+  dinner                  Boolean
+  lunchPrice              Int
+  dinnerPrice             Int
+  branchId                Int
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  // deletedBy               Int?
+  // createdBy               Int?
+  deletedAt               DateTime?
+  // user                    user?           @relation(fields: [deletedBy], references: [id])
+  branch                  branch          @relation(fields: [branchId], references: [id])
+  dailyMenuDetail         dailyMenuDetail[]
+}
+model dailyMenuDetail {
+  id                  Int           @id @default(autoincrement())
+  dailyMenuId         Int
+  menuId              Int
+  menu                menu         @relation(fields: [menuId], references: [id])
+  dailyMenu           dailyMenu    @relation(fields: [dailyMenuId], references: [id])
+}
+model reservations {
+  id                        Int        @id @default(autoincrement())
+  numberOfGuest             Int
+  reservationDate           DateTime
+  reservationMode           String // Offline / Online
+  reservationType           String // Dinner / Lunch
+  name                      String
+  phoneNumber               String
+  email                     String     
+  paymentType               String  // Cash / Online
+  voucherId                 Int?
+  originalAmount            Float
+  voucherDiscount           Int?
+  CGST                      Int?       @default(0)
+  SGST                      Int
+  finalAmount               Float
+  transactionCode           String?
+  transactionDetails        String?
+  status                    String     @default("Available")  // Available / Cancel
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+  isDeleted                 Boolean         @default(false)
+  userId                    Int
+  branchId                  Int
+  voucher                   vouchers?  @relation(fields: [voucherId], references: [id])
+  user                      user      @relation(fields: [userId], references: [id])
+  branch                    branch    @relation(fields: [branchId], references: [id])
+  reservationsMenuDetail    reservationsMenuDetail[]
+  reservationsGuestDetails  reservationsGuestDetails[]
+  reservationsTableDetail   reservationsTableDetail[]
+}  
+
+model reservationsTableDetail {
+  id                  Int           @id @default(autoincrement())
+  reservationId       Int
+  tableId             Int
+  reservations        reservations  @relation(fields: [reservationId], references: [id])
+  table               table?         @relation(fields: [tableId], references: [id])
+}
+model reservationsMenuDetail {
+  id                  Int           @id @default(autoincrement())
+  reservationId       Int
+  menuId              Int
+  reservations        reservations  @relation(fields: [reservationId], references: [id])
+  menu                tasteMenu     @relation(fields: [menuId], references: [id])
+}
+model reservationsGuestDetails {
+  id                  Int           @id @default(autoincrement())
+  reservationId       Int
+  reservations        reservations  @relation(fields: [reservationId], references: [id])
+  name                String
+  foodPreference      String  // Veg, Non-Veg, Vegan
+  anyAlergies         String
+}
+
+model holiday {
+  id              Int       @id @default(autoincrement())
+  branchId        Int
+  startDate       DateTime  @db.Date
+  endDate         DateTime  @db.Date
+  note            String
+  branch          branch    @relation(fields: [branchId], references: [id])
+  user            user[]
+}
+
+model tasteMenu {
+  id                      Int             @id @default(autoincrement())
+  title                   String
+  description             String
+  image                   String
+  type                    String          //Lunch, Dinner
+  price                   Float
+  days                    String
+  branchId                Int
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  isDeleted               Boolean         @default(false)
+  deletedBy               Int?
+  deletedAt               DateTime?
+  createdBy               Int?
+  updatedBy               Int?
+  branch                  branch?         @relation(fields: [branchId], references: [id])
+  deletedByUser           user?          @relation("DeletedByUser", fields: [deletedBy], references: [id])
+  createdByUser           user?          @relation("CreatedByUser", fields: [createdBy], references: [id])
+  updatedByUser           user?          @relation("UpdatedByUser", fields: [updatedBy], references: [id])
+
+  reservationsMenuDetail  reservationsMenuDetail[]
+}
+
+model email {
+  id            Int      @id @default(autoincrement())
+  senderEmail   String
+  receiverEmail String
+  subject       String?
+  body          String?
+  emailStatus   String?
+  status        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  bcc           bcc[]
+  cc            cc[]
+}
+
+model cc {
+  id         Int       @id @default(autoincrement())
+  emailId    Int?
+  crmEmailId Int?
+  ccEmail    String
+  status     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  crmEmail   crmEmail? @relation(fields: [crmEmailId], references: [id], onDelete: Cascade)
+  email      email?    @relation(fields: [emailId], references: [id], onDelete: Cascade)
+}
+
+model bcc {
+  id         Int       @id @default(autoincrement())
+  emailId    Int?
+  crmEmailId Int?
+  bccEmail   String
+  status     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  crmEmail   crmEmail? @relation(fields: [crmEmailId], references: [id], onDelete: Cascade)
+  email      email?    @relation(fields: [emailId], references: [id], onDelete: Cascade)
+}
+
+model emailConfig {
+  id              Int      @id @default(autoincrement())
+  emailConfigName String
+  emailHost       String
+  emailPort       Int
+  emailUser       String
+  emailPass       String
+  status          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model crmEmail {
+  id            Int          @id @default(autoincrement())
+  emailOwnerId  Int
+  senderEmail   String
+  receiverEmail String
+  subject       String?
+  body          String?
+  emailStatus   String?
+  status        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  bcc           bcc[]
+  cc            cc[]
+  emailOwner    user         @relation(fields: [emailOwnerId], references: [id])
+}
+model waitingList {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String
+  phoneNumber       String
+  numberOfGuest      Int
+  reservationDate   DateTime
+  reservationSlot   String    // Dinner / Lunch
+  status            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  isDeleted         Boolean   @default(false)
+  branchId          Int
+  branch          branch    @relation(fields: [branchId], references: [id])
+}
